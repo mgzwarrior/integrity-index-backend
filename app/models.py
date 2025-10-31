@@ -12,7 +12,7 @@ class Politician(Base):
     party = Column(String, nullable=False)
     term_start = Column(Date, nullable=False)
     term_end = Column(Date, nullable=False)
-    
+
     # Optional external IDs
     govtrack_id = Column(String(50), nullable=True, unique=True, index=True)
     opensecrets_id = Column(String(50), nullable=True, unique=True, index=True)

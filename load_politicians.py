@@ -2,10 +2,10 @@
 Script to load current Congress members from the congress-legislators GitHub dataset
 into the politicians table.
 """
+
 import yaml
 import requests
 from datetime import datetime
-from sqlalchemy.orm import Session
 from app.database import SessionLocal, engine
 from app.models import Base, Politician
 
@@ -31,34 +31,38 @@ def parse_date(date_str):
 def load_legislators_to_db(legislators_data):
     """Load legislators data into the database"""
     db = SessionLocal()
-    
+
     try:
         count = 0
         for legislator in legislators_data:
             # Extract basic information
             name_data = legislator.get("name", {})
-            full_name = f"{name_data.get('first', '')} {name_data.get('last', '')}".strip()
-            
+            full_name = (
+                f"{name_data.get('first', '')} {name_data.get('last', '')}".strip()
+            )
+
             # Get current term (last term in the terms list)
             terms = legislator.get("terms", [])
             if not terms:
                 print(f"Skipping {full_name}: no terms data")
                 continue
-                
+
             current_term = terms[-1]  # Get the most recent term
-            
+
             # Extract term information
-            office_type = current_term.get("type", "").capitalize()  # "rep" -> "Rep", "sen" -> "Sen"
+            office_type = current_term.get(
+                "type", ""
+            ).capitalize()  # "rep" -> "Rep", "sen" -> "Sen"
             if office_type == "Rep":
                 office_type = "House"
             elif office_type == "Sen":
                 office_type = "Senate"
-            
+
             state = current_term.get("state", "")
             party = current_term.get("party", "")
             term_start = parse_date(current_term.get("start"))
             term_end = parse_date(current_term.get("end"))
-            
+
             # Extract external IDs
             # Note: The congress-legislators dataset does not include followthemoney_id.
             # FEC IDs are stored in followthemoney_id field as they may be useful for
@@ -66,23 +70,29 @@ def load_legislators_to_db(legislators_data):
             ids = legislator.get("id", {})
             govtrack_id = ids.get("govtrack")
             opensecrets_id = ids.get("opensecrets")
-            followthemoney_id = ids.get("fec")  # FEC ID for potential FollowTheMoney integration
-            
+            followthemoney_id = ids.get(
+                "fec"
+            )  # FEC ID for potential FollowTheMoney integration
+
             # Skip if missing required fields
             if not all([full_name, state, office_type, party, term_start, term_end]):
                 print(f"Skipping {full_name}: missing required fields")
                 continue
-            
+
             # Convert IDs to strings if they exist
             govtrack_id = str(govtrack_id) if govtrack_id else None
             opensecrets_id = str(opensecrets_id) if opensecrets_id else None
             followthemoney_id = str(followthemoney_id) if followthemoney_id else None
-            
+
             # Check if politician already exists (by govtrack_id or name)
             existing = None
             if govtrack_id:
-                existing = db.query(Politician).filter(Politician.govtrack_id == govtrack_id).first()
-            
+                existing = (
+                    db.query(Politician)
+                    .filter(Politician.govtrack_id == govtrack_id)
+                    .first()
+                )
+
             if existing:
                 # Update existing record
                 existing.name = full_name
@@ -105,16 +115,16 @@ def load_legislators_to_db(legislators_data):
                     term_end=term_end,
                     govtrack_id=govtrack_id,
                     opensecrets_id=opensecrets_id,
-                    followthemoney_id=followthemoney_id
+                    followthemoney_id=followthemoney_id,
                 )
                 db.add(politician)
                 print(f"Added: {full_name} ({state}-{office_type})")
-            
+
             count += 1
-        
+
         db.commit()
         print(f"\nSuccessfully loaded {count} legislators into the database.")
-        
+
     except Exception as e:
         db.rollback()
         print(f"Error loading legislators: {e}")
@@ -127,10 +137,10 @@ def main():
     """Main function to create tables and load data"""
     print("Creating database tables...")
     Base.metadata.create_all(bind=engine)
-    
+
     print("\nFetching and loading legislators data...")
     legislators_data = fetch_legislators_data()
-    
+
     print(f"Found {len(legislators_data)} legislators in the dataset.\n")
     load_legislators_to_db(legislators_data)
 
