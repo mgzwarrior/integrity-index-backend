@@ -5,7 +5,7 @@ This project is a Python backend service for the Integrity Index, built with Fas
 ## Technology Stack
 - **Framework**: FastAPI
 - **Database**: PostgreSQL (using SQLAlchemy ORM and asyncpg)
-- **Python Version**: 3.x
+- **Python Version**: 3.9+
 - **Package Management**: pip with requirements.txt
 
 ## Coding Standards
@@ -116,15 +116,14 @@ This project is a Python backend service for the Integrity Index, built with Fas
 
 ### Configuration Structure
 ```python
-# Example configuration pattern
-from pydantic_settings import BaseSettings
+# Example configuration pattern (Pydantic v2)
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env")
+    
     database_url: str
     secret_key: str
-    
-    class Config:
-        env_file = ".env"
 ```
 
 ## Documentation
