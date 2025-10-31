@@ -26,18 +26,18 @@ def get_politicians(
     state: str = None,
     office_type: str = None,
     party: str = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get list of politicians with optional filters"""
     query = db.query(PoliticianModel)
-    
+
     if state:
         query = query.filter(PoliticianModel.state == state)
     if office_type:
         query = query.filter(PoliticianModel.office_type == office_type)
     if party:
         query = query.filter(PoliticianModel.party == party)
-    
+
     politicians = query.offset(skip).limit(limit).all()
     return politicians
 
@@ -45,7 +45,9 @@ def get_politicians(
 @app.get("/politicians/{politician_id}", response_model=Politician)
 def get_politician(politician_id: int, db: Session = Depends(get_db)):
     """Get a specific politician by ID"""
-    politician = db.query(PoliticianModel).filter(PoliticianModel.id == politician_id).first()
+    politician = (
+        db.query(PoliticianModel).filter(PoliticianModel.id == politician_id).first()
+    )
     if politician is None:
         raise HTTPException(status_code=404, detail="Politician not found")
     return politician
@@ -63,6 +65,5 @@ def create_politician(politician: PoliticianCreate, db: Session = Depends(get_db
     except IntegrityError as e:
         db.rollback()
         raise HTTPException(
-            status_code=400,
-            detail=f"Database constraint violation: {str(e.orig)}"
+            status_code=400, detail=f"Database constraint violation: {str(e.orig)}"
         )

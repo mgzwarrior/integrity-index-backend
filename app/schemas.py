@@ -5,6 +5,7 @@ from datetime import date
 
 class PoliticianBase(BaseModel):
     """Base Politician schema with common attributes"""
+
     name: str
     state: str
     office_type: str  # "House" or "Senate"
@@ -18,11 +19,13 @@ class PoliticianBase(BaseModel):
 
 class PoliticianCreate(PoliticianBase):
     """Schema for creating a new Politician"""
+
     pass
 
 
 class Politician(PoliticianBase):
     """Schema for reading a Politician from the database"""
+
     id: int
 
     model_config = ConfigDict(from_attributes=True)
