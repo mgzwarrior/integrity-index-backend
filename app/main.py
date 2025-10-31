@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from typing import List
 
 from app.database import get_db, engine
@@ -53,8 +54,15 @@ def get_politician(politician_id: int, db: Session = Depends(get_db)):
 @app.post("/politicians", response_model=Politician)
 def create_politician(politician: PoliticianCreate, db: Session = Depends(get_db)):
     """Create a new politician"""
-    db_politician = PoliticianModel(**politician.model_dump())
-    db.add(db_politician)
-    db.commit()
-    db.refresh(db_politician)
-    return db_politician
+    try:
+        db_politician = PoliticianModel(**politician.model_dump())
+        db.add(db_politician)
+        db.commit()
+        db.refresh(db_politician)
+        return db_politician
+    except IntegrityError as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail=f"Database constraint violation: {str(e.orig)}"
+        )

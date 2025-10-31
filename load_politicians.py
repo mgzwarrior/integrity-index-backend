@@ -60,10 +60,13 @@ def load_legislators_to_db(legislators_data):
             term_end = parse_date(current_term.get("end"))
             
             # Extract external IDs
+            # Note: The congress-legislators dataset does not include followthemoney_id.
+            # FEC IDs are stored in followthemoney_id field as they may be useful for
+            # future integration with FollowTheMoney.org data.
             ids = legislator.get("id", {})
             govtrack_id = ids.get("govtrack")
             opensecrets_id = ids.get("opensecrets")
-            followthemoney_id = ids.get("fec")  # Using FEC ID as a proxy for followthemoney
+            followthemoney_id = ids.get("fec")  # FEC ID for potential FollowTheMoney integration
             
             # Skip if missing required fields
             if not all([full_name, state, office_type, party, term_start, term_end]):
